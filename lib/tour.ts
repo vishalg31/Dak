@@ -25,7 +25,7 @@ function buildDriver() {
         element: '#email-preview-root',
         popover: {
           title: 'Your email is live',
-          description: 'Click any text — heading, paragraph, stat — to edit it inline. Changes save automatically.',
+          description: 'Click any text (heading, paragraph, stat) to edit it inline. Changes save automatically.',
           side: 'left',
           align: 'start',
         },
@@ -43,7 +43,7 @@ function buildDriver() {
         element: '[data-tour="style-panel"]',
         popover: {
           title: 'Style your email',
-          description: 'Switch themes, tweak primary and accent colours, change the font and size — all live with no regeneration needed.',
+          description: 'Switch themes, tweak primary and accent colours, change the font and size. All live with no regeneration needed.',
           side: 'left',
           align: 'start',
         },
