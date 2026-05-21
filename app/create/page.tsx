@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { TemplateSelector, type TemplateId } from '@/components/TemplateSelector'
 import { SplitSelector } from '@/components/SplitSelector'
 import { ContentInput } from '@/components/ContentInput'
@@ -27,6 +27,8 @@ export default function CreatePage() {
   const [progressState, setProgressState] = useState<'idle' | 'loading' | 'complete'>('idle')
   const [progressKey, setProgressKey]   = useState(0)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [previewScale, setPreviewScale] = useState(1)
+  const previewWrapRef = useRef<HTMLDivElement>(null)
 
   // Daily session ID — same UUID for the whole day, new one each day
   const [sessionId] = useState(() => {
@@ -74,6 +76,18 @@ export default function CreatePage() {
     const t = setTimeout(() => setCacheNotice(null), 3000)
     return () => clearTimeout(t)
   }, [cacheNotice])
+
+  // Scale email preview to fit container when viewport is narrower than 800px content
+  useEffect(() => {
+    const el = previewWrapRef.current
+    if (!el) return
+    const obs = new ResizeObserver(([entry]) => {
+      const available = entry.contentRect.width - 48
+      setPreviewScale(Math.min(1, available / 800))
+    })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
 
   async function generate(opts?: { template?: TemplateId, parts?: 1 | 2 | 3, content?: string }) {
     const _template = opts?.template ?? template
@@ -276,11 +290,12 @@ export default function CreatePage() {
         >
           <div className="perf-row" />
           <div
+            ref={previewWrapRef}
             className="preview-wrap"
             style={{
               flex: 1,
               overflowY: 'auto',
-              overflowX: 'auto',
+              overflowX: 'hidden',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -331,43 +346,45 @@ export default function CreatePage() {
             </div>
           )}
 
-          {isLoading ? (
-            <SkeletonLoader template={template} />
-          ) : emailData ? (
-            <EmailPreview
-              emailData={emailData}
-              parts={parts}
-              logoBase64={logoBase64}
-              onUpdateBlock={updateBlock}
-              onUpdateTopLevel={updateTopLevel}
-              onUpdateCTA={updateCTA}
-              onUpdateSignoff={updateSignoff}
-              onRegenerate={generate}
-            />
-          ) : (
-            <div
-              style={{
-                width: 800,
-                minWidth: 800,
-                background: '#fff',
-                borderRadius: 8,
-                padding: '80px 36px',
-                textAlign: 'center',
-                color: '#9ca3af',
-                fontFamily: 'var(--font-inter), Arial, sans-serif',
-                fontSize: 14,
-                border: '1px dashed var(--ui-border)',
-              }}
-            >
-              <div style={{ fontSize: 36, marginBottom: 16 }}>✉</div>
-              <p style={{ fontSize: 15, fontWeight: 500, color: '#6b7280', marginBottom: 6 }}>
-                Your email will appear here
-              </p>
-              <p style={{ fontSize: 13, color: '#9ca3af' }}>
-                Choose a template, set your split, paste your content, and click Generate
-              </p>
-            </div>
-          )}
+          <div style={{ zoom: previewScale < 1 ? previewScale : undefined }}>
+            {isLoading ? (
+              <SkeletonLoader template={template} />
+            ) : emailData ? (
+              <EmailPreview
+                emailData={emailData}
+                parts={parts}
+                logoBase64={logoBase64}
+                onUpdateBlock={updateBlock}
+                onUpdateTopLevel={updateTopLevel}
+                onUpdateCTA={updateCTA}
+                onUpdateSignoff={updateSignoff}
+                onRegenerate={generate}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 800,
+                  minWidth: 800,
+                  background: '#fff',
+                  borderRadius: 8,
+                  padding: '80px 36px',
+                  textAlign: 'center',
+                  color: '#9ca3af',
+                  fontFamily: 'var(--font-inter), Arial, sans-serif',
+                  fontSize: 14,
+                  border: '1px dashed var(--ui-border)',
+                }}
+              >
+                <div style={{ fontSize: 36, marginBottom: 16 }}>✉</div>
+                <p style={{ fontSize: 15, fontWeight: 500, color: '#6b7280', marginBottom: 6 }}>
+                  Your email will appear here
+                </p>
+                <p style={{ fontSize: 13, color: '#9ca3af' }}>
+                  Choose a template, set your split, paste your content, and click Generate
+                </p>
+              </div>
+            )}
+          </div>
           </div>
           <div className="perf-row" />
         </div>
