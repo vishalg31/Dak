@@ -206,7 +206,7 @@ export function EditorSidebar({ disabled, logoBase64, onImageUpload }: Props) {
       </div>
 
       {/* Image upload */}
-      <div>
+      <div data-tour="logo-upload">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <span style={{ ...labelStyle, marginBottom: 0 }}>Logo</span>
           {logoBase64 && (

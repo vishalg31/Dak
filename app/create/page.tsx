@@ -13,6 +13,8 @@ import { checkUsage, incrementUsage, type UsageStatus } from '@/lib/checkUsage'
 import { db } from '@/lib/db'
 import type { EmailData, BlockContent } from '@/types/email'
 import { OnboardingModal } from '@/components/OnboardingModal'
+import { runTourIfNeeded } from '@/lib/tour'
+import Link from 'next/link'
 
 export default function CreatePage() {
   const [template, setTemplate]       = useState<TemplateId>('launch')
@@ -43,13 +45,12 @@ export default function CreatePage() {
     return newId
   })
 
-  // Load usage status on mount + check if onboarding needed
+  // Load usage status on mount + show modal on every fresh visit (skip if restoring a session)
   useEffect(() => {
     checkUsage(sessionId).then(setUsageStatus)
     if (typeof window !== 'undefined') {
-      const hasOnboarded = localStorage.getItem('dak_onboarded')
-      const hasRestore   = localStorage.getItem('dak_restore')
-      if (!hasOnboarded && !hasRestore) setShowOnboarding(true)
+      const hasRestore = localStorage.getItem('dak_restore')
+      if (!hasRestore) setShowOnboarding(true)
     }
   }, [sessionId])
 
@@ -76,6 +77,15 @@ export default function CreatePage() {
     const t = setTimeout(() => setCacheNotice(null), 3000)
     return () => clearTimeout(t)
   }, [cacheNotice])
+
+  // Fire product tour once after first email generation this session
+  const tourFiredRef = useRef(false)
+  useEffect(() => {
+    if (!emailData || tourFiredRef.current) return
+    tourFiredRef.current = true
+    const t = setTimeout(runTourIfNeeded, 600)
+    return () => clearTimeout(t)
+  }, [emailData])
 
   // Scale email preview to fit container when viewport is narrower than 800px content
   useEffect(() => {
@@ -124,12 +134,17 @@ export default function CreatePage() {
         throw new Error(data.error || 'Generation failed')
       }
       const data = await res.json()
-      await Promise.all([
-        incrementUsage(sessionId),
-        setCachedGeneration(_content, _template, _parts, data),
-      ])
+      // Storage writes are best-effort — disk full or quota errors must not block the email showing
+      try {
+        await Promise.all([
+          incrementUsage(sessionId),
+          setCachedGeneration(_content, _template, _parts, data),
+        ])
+        checkUsage(sessionId).then(setUsageStatus)
+      } catch {
+        // ignore storage failures
+      }
       setEmailData(data)
-      checkUsage(sessionId).then(setUsageStatus)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Generation failed. Please try again.'
       setError(message)
@@ -236,6 +251,21 @@ export default function CreatePage() {
             gap: 24,
           }}
         >
+          <Link
+            href="/"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              color: 'var(--ui-text-muted)',
+              textDecoration: 'none',
+              fontFamily: 'var(--font-inter), Arial, sans-serif',
+            }}
+          >
+            ← Home
+          </Link>
+
           <TemplateSelector selected={template} onChange={setTemplate} />
           <SplitSelector value={parts} onChange={setParts} hasGenerated={!!emailData} />
           <ContentInput
@@ -404,6 +434,7 @@ export default function CreatePage() {
           }}
         >
           <div
+            data-tour="style-panel"
             style={{
               fontSize: 11,
               fontWeight: 700,
@@ -422,7 +453,7 @@ export default function CreatePage() {
             onImageUpload={setLogoBase64}
           />
 
-          <div style={{ marginTop: 24 }}>
+          <div data-tour="export-panel" style={{ marginTop: 24 }}>
             <ExportPanel partCount={parts} disabled={!emailData || isLoading} />
           </div>
         </div>

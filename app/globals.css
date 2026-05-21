@@ -232,3 +232,51 @@ body {
   outline: 2px solid rgba(27, 58, 107, 0.3);
   border-radius: 3px;
 }
+
+/* ===== Driver.js tour popover ===== */
+.dak-tour-popover {
+  font-family: var(--font-inter), Arial, sans-serif !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.16) !important;
+  padding: 20px !important;
+  max-width: 280px !important;
+}
+.dak-tour-popover .driver-popover-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: var(--ui-primary) !important;
+  margin-bottom: 6px !important;
+}
+.dak-tour-popover .driver-popover-description {
+  font-size: 13px !important;
+  color: var(--ui-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+.dak-tour-popover .driver-popover-footer {
+  margin-top: 14px !important;
+}
+.dak-tour-popover .driver-popover-next-btn,
+.dak-tour-popover .driver-popover-done-btn {
+  background: var(--ui-primary) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  cursor: pointer !important;
+}
+.dak-tour-popover .driver-popover-prev-btn {
+  background: none !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 6px !important;
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  color: var(--ui-text-secondary) !important;
+  cursor: pointer !important;
+}
+.dak-tour-popover .driver-popover-close-btn {
+  color: var(--ui-text-muted) !important;
+}

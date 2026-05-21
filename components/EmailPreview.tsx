@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useDeferredValue, useState, useRef, useEffect } from 'react'
+import { startTour } from '@/lib/tour'
 import type { EmailData, EmailBlock, BlockContent } from '@/types/email'
 import { HeroHeader } from './blocks/HeroHeader'
 import { StatsBar } from './blocks/StatsBar'
@@ -126,8 +127,23 @@ export function EmailPreview({
 
   return (
     <div style={{ position: 'relative', opacity: isStale ? 0.6 : 1, transition: 'opacity 0.2s' }}>
-      {/* Regenerate button */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+      {/* Toolbar — Regenerate + Tour */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <button
+          onClick={startTour}
+          style={{
+            background: 'none',
+            border: '1px solid var(--ui-border)',
+            borderRadius: 6,
+            padding: '6px 14px',
+            fontSize: 12,
+            color: 'var(--ui-text-muted)',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-inter), Arial, sans-serif',
+          }}
+        >
+          Take a tour ?
+        </button>
         <button
           onClick={() => {
             if (confirm('This will replace your current email and edits. Continue?')) {

@@ -55,13 +55,11 @@ export function OnboardingModal({ onComplete, onSkip }: OnboardingModalProps) {
   }
 
   function handleSkip() {
-    if (typeof window !== 'undefined') localStorage.setItem('dak_onboarded', 'true')
     close(onSkip)
   }
 
   function handleComplete() {
     if (!canGenerate) return
-    if (typeof window !== 'undefined') localStorage.setItem('dak_onboarded', 'true')
     close(() => onComplete(template, parts, content))
   }
 
