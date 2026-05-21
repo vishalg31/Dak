@@ -18,8 +18,14 @@ export function ExportPanel({ partCount, disabled }: Props) {
   const [clipBusy, setClipBusy]       = useState(false)
   const [clipStatus, setClipStatus]   = useState('')
 
+  const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.includes('Firefox')
+
   async function handleExport() {
     if (busy || disabled) return
+    if (isFirefox) {
+      setStatus('PNG export requires Chrome or Edge. Firefox does not support image capture.')
+      return
+    }
     setBusy(true)
     setStatus('')
     try {
@@ -27,7 +33,7 @@ export function ExportPanel({ partCount, disabled }: Props) {
       await exportEmail(partCount, projectName, setStatus)
     } catch (err) {
       console.error(err)
-      setStatus('Export failed. Try again. If this persists, try a different browser.')
+      setStatus('Export failed. Try again. If this persists, try Chrome or Edge.')
     } finally {
       setBusy(false)
     }
@@ -35,6 +41,10 @@ export function ExportPanel({ partCount, disabled }: Props) {
 
   async function handleCopyForOutlook() {
     if (clipBusy || disabled) return
+    if (isFirefox) {
+      setClipStatus('Copy for Outlook requires Chrome or Edge.')
+      return
+    }
     setClipBusy(true)
     setClipBlobs(null)
     setClipStep(0)
