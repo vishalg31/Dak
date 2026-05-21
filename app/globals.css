@@ -1,0 +1,234 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== UI Design Tokens ===== */
+:root {
+  --ui-bg:              #F5F0E8;
+  --ui-surface:         #FFFFFF;
+  --ui-border:          #D6C9B0;
+  --ui-primary:         #1B3A6B;
+  --ui-primary-hover:   #152E57;
+  --ui-accent:          #C0392B;
+  --ui-accent-light:    #FDECEA;
+  --ui-text-primary:    #1A1A2E;
+  --ui-text-secondary:  #6B6B7B;
+  --ui-text-muted:      #A09880;
+  --ui-preview-bg:      #E8E0D0;
+}
+
+/* ===== Email Design Tokens (Navy defaults — overridden by theme switcher) ===== */
+#email-preview-root {
+  --email-primary-start: #0a3d62;
+  --email-primary-end:   #1a6fa0;
+  --email-accent:        #ff9900;
+  --email-card-bg:       #f0f4f8;
+  --email-font:          'Segoe UI', Arial, sans-serif;
+  --email-font-size:     15px;
+  --email-bg:            #ffffff;
+}
+
+/* ===== Base ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--ui-bg);
+  font-family: var(--font-inter), Arial, sans-serif;
+  color: var(--ui-text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Font utilities ===== */
+.font-heading {
+  font-family: var(--font-fraunces), Georgia, serif;
+}
+
+.font-body {
+  font-family: var(--font-inter), Arial, sans-serif;
+}
+
+.dak-wordmark {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 700;
+  font-variation-settings: 'opsz' 144, 'SOFT' 0, 'WONK' 1;
+  color: var(--ui-primary);
+  letter-spacing: -0.5px;
+  font-size: 22px;
+}
+
+/* ===== Site header ===== */
+.site-header {
+  background: var(--ui-surface);
+  border-bottom: 1px solid var(--ui-border);
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.site-header-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.site-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+/* ===== Site footer ===== */
+.site-footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 11px;
+  color: var(--ui-text-muted);
+  border-top: 1px solid var(--ui-border);
+  line-height: 1.8;
+}
+
+.site-footer-credit {
+  font-weight: 600;
+  color: var(--ui-text-secondary);
+  margin-bottom: 2px;
+}
+
+.site-footer a {
+  color: var(--ui-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.site-footer a:hover {
+  text-decoration: underline;
+}
+
+/* ===== Stamp step indicators ===== */
+.stamp-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1.5px dashed var(--ui-border);
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ui-text-secondary);
+  background: var(--ui-surface);
+  flex-shrink: 0;
+}
+
+.stamp-step.active {
+  border-color: var(--ui-primary);
+  color: var(--ui-primary);
+  background: var(--ui-accent-light);
+}
+
+/* ===== Preview container ===== */
+.preview-wrap {
+  position: relative;
+  background: var(--ui-preview-bg);
+}
+
+/* Stamp perforation rows — rendered as real flex siblings above/below the scroll area */
+.perf-row {
+  flex-shrink: 0;
+  height: 12px;
+  background-color: var(--ui-preview-bg);
+  background-image: radial-gradient(circle, var(--ui-bg) 4px, transparent 4px);
+  background-size: 16px 12px;
+  background-repeat: repeat-x;
+  background-position: 8px 50%;
+}
+
+/* ===== Button spinner ===== */
+@keyframes dak-spin {
+  to { transform: rotate(360deg); }
+}
+.dak-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: dak-spin 0.7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* ===== Progress bar ===== */
+@keyframes dak-progress-fill {
+  0%   { width: 0%; }
+  100% { width: 85%; }
+}
+
+/* ===== Skeleton shimmer ===== */
+@keyframes shimmer {
+  0%   { background-position: -800px 0; }
+  100% { background-position:  800px 0; }
+}
+
+.skeleton-box {
+  background: linear-gradient(
+    to right,
+    #d4ccbc 8%,
+    #c4bcac 18%,
+    #d4ccbc 33%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 4px;
+}
+
+.skeleton-box-dark {
+  background: linear-gradient(
+    to right,
+    #2d2d2d 8%,
+    #3d3d3d 18%,
+    #2d2d2d 33%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 4px;
+}
+
+/* ===== Email block entry animation ===== */
+.email-block {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+@starting-style {
+  .email-block {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ===== Contenteditable hover indicator ===== */
+[contenteditable]:hover {
+  background: rgba(27, 58, 107, 0.06);
+  border-radius: 3px;
+}
+
+[contenteditable]:focus {
+  outline: 2px solid rgba(27, 58, 107, 0.3);
+  border-radius: 3px;
+}
