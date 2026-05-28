@@ -22,7 +22,7 @@ export function DarkBanner({ content, heading, onUpdate }: Props) {
     <div
       className="email-block"
       style={{
-        background: 'linear-gradient(135deg, var(--email-primary-start), var(--email-primary-end))',
+        background: 'var(--block-bg, linear-gradient(135deg, var(--email-primary-start), var(--email-primary-end)))',
         borderRadius: 8,
         padding: 24,
         marginBottom: 24,

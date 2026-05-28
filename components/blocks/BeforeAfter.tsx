@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import type { BeforeAfterContent } from '@/types/email'
 
@@ -23,7 +23,7 @@ export function BeforeAfter({ content, heading, onUpdate }: Props) {
             paddingBottom: 5,
             marginBottom: 14,
             fontFamily: 'var(--email-font)',
-            color: '#1a1a2e',
+            color: 'var(--email-text, #1a1a2e)',
           }}
         >
           {heading}

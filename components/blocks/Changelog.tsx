@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import type { ChangelogContent } from '@/types/email'
 
@@ -39,7 +39,7 @@ export function Changelog({ content, heading, onUpdate }: Props) {
             paddingBottom: 5,
             marginBottom: 14,
             fontFamily: 'var(--email-font)',
-            color: '#1a1a2e',
+            color: 'var(--email-text, #1a1a2e)',
           }}
         >
           {heading}
@@ -50,8 +50,8 @@ export function Changelog({ content, heading, onUpdate }: Props) {
         <div
           key={vi}
           style={{
-            borderLeft: '4px solid #d97706',
-            background: '#fffbf0',
+            borderLeft: '4px solid var(--block-border, var(--email-accent, #d97706))',
+            background: 'var(--block-bg, var(--email-card-bg, #fffbf0))',
             padding: '12px 16px',
             borderRadius: '0 8px 8px 0',
             marginBottom: 12,
@@ -62,7 +62,7 @@ export function Changelog({ content, heading, onUpdate }: Props) {
               display: 'inline-block',
               fontSize: 11,
               fontWeight: 700,
-              background: '#d97706',
+              background: 'var(--email-accent, #d97706)',
               color: '#fff',
               borderRadius: 12,
               padding: '2px 10px',
@@ -88,10 +88,10 @@ export function Changelog({ content, heading, onUpdate }: Props) {
                   position: 'relative',
                   fontSize: 'var(--email-font-size)',
                   fontFamily: 'var(--email-font)',
-                  color: '#1a1a2e',
+                  color: 'var(--email-text, #1a1a2e)',
                 }}
               >
-                <span style={{ position: 'absolute', left: 0, color: '#d97706' }}>▸</span>
+                <span style={{ position: 'absolute', left: 0, color: 'var(--email-accent, #d97706)' }}>▸</span>
                 <span
                   contentEditable
                   suppressContentEditableWarning

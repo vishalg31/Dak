@@ -47,17 +47,45 @@ export type BlockType =
   | 'changelog'
   | 'data_table'
 
-export interface StatsBarContent { items: StatsItem[] }
-export interface ProblemTableContent { rows: ProblemRow[] }
-export interface FeatureListContent { items: FeatureItem[] }
-export interface ProcessFlowContent { steps: ProcessStep[] }
+export interface BlockStyle {
+  bg?: string
+  rowBg?: string
+  borderColor?: string
+  borderStyle?: 'solid' | 'dashed' | 'none'
+}
+
+export interface StatsBarContent { items: StatsItem[]; style?: BlockStyle }
+
+export interface ProblemVariant { label: string; rows: ProblemRow[] }
+export interface ProblemTableContent {
+  rows?: ProblemRow[]
+  activeVariant?: number
+  variants?: ProblemVariant[]
+}
+
+export interface FeatureVariant { label: string; items: FeatureItem[] }
+export interface FeatureListContent {
+  items?: FeatureItem[]
+  activeVariant?: number
+  variants?: FeatureVariant[]
+}
+
+export interface ProcessFlowContent { steps: ProcessStep[]; style?: BlockStyle }
 export interface DarkBannerContent { items: StatsItem[] }
 export interface BeforeAfterContent {
   before: { value: string; label: string; description: string }
   after: { value: string; label: string; description: string }
 }
 export interface CalloutContent { text: string; highlight?: string }
-export interface WhatsNextContent { style: 'bullets' | 'timeline'; items: WhatsNextItem[] }
+
+export interface WhatsNextVariant { label: string; style: 'bullets' | 'timeline'; items: WhatsNextItem[] }
+export interface WhatsNextContent {
+  style?: 'bullets' | 'timeline'
+  items?: WhatsNextItem[]
+  activeVariant?: number
+  variants?: WhatsNextVariant[]
+}
+
 export interface ChangelogContent { versions: ChangelogVersion[] }
 export interface DataTableContent { columns: string[]; rows: DataTableRow[] }
 
@@ -78,6 +106,7 @@ export interface EmailBlock {
   part: number
   heading: string | null
   content: BlockContent
+  style?: BlockStyle
 }
 
 export interface EmailData {
@@ -88,6 +117,6 @@ export interface EmailData {
   greeting: string
   intro: string
   blocks: EmailBlock[]
-  cta: { label: string; url: string; part: number }
+  cta: { label: string; url: string; part: number; hidden?: boolean }
   signoff: { closing: string; name: string; part: number }
 }

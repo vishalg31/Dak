@@ -1,4 +1,8 @@
-import { Inter, Fraunces, Geist } from 'next/font/google'
+import {
+  Inter, Fraunces, Geist,
+  Roboto, Open_Sans, Lato, Montserrat,
+  DM_Sans, Playfair_Display, Source_Serif_4,
+} from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react'
 import { NavBar } from '@/components/NavBar'
 import './globals.css'
@@ -19,6 +23,48 @@ const geist = Geist({
   subsets:  ['latin'],
   variable: '--font-geist',
   weight:   ['400', '500', '600', '700'],
+})
+
+const roboto = Roboto({
+  subsets:  ['latin'],
+  variable: '--font-roboto',
+  weight:   ['400', '700'],
+})
+
+const openSans = Open_Sans({
+  subsets:  ['latin'],
+  variable: '--font-opensans',
+  weight:   ['400', '600', '700'],
+})
+
+const lato = Lato({
+  subsets:  ['latin'],
+  variable: '--font-lato',
+  weight:   ['400', '700'],
+})
+
+const montserrat = Montserrat({
+  subsets:  ['latin'],
+  variable: '--font-montserrat',
+  weight:   ['400', '500', '600', '700'],
+})
+
+const dmSans = DM_Sans({
+  subsets:  ['latin'],
+  variable: '--font-dmsans',
+  weight:   ['400', '500', '600', '700'],
+})
+
+const playfair = Playfair_Display({
+  subsets:  ['latin'],
+  variable: '--font-playfair',
+  weight:   ['400', '600', '700'],
+})
+
+const sourceSerif = Source_Serif_4({
+  subsets:  ['latin'],
+  variable: '--font-sourceserif',
+  weight:   ['400', '600', '700'],
 })
 
 export const metadata = {
@@ -49,7 +95,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${inter.variable} ${geist.variable}`}>
+    <html lang="en" className={`${fraunces.variable} ${inter.variable} ${geist.variable} ${roboto.variable} ${openSans.variable} ${lato.variable} ${montserrat.variable} ${dmSans.variable} ${playfair.variable} ${sourceSerif.variable}`}>
       <body>
         <NavBar />
 

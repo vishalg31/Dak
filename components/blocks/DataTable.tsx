@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import type { DataTableContent } from '@/types/email'
 
@@ -38,7 +38,7 @@ export function DataTable({ content, heading, onUpdate }: Props) {
             paddingBottom: 5,
             marginBottom: 14,
             fontFamily: 'var(--email-font)',
-            color: '#1a1a2e',
+            color: 'var(--email-text, #1a1a2e)',
           }}
         >
           {heading}
@@ -52,7 +52,7 @@ export function DataTable({ content, heading, onUpdate }: Props) {
               <th
                 key={i}
                 style={{
-                  background: '#1a1a2e',
+                  background: 'var(--block-bg, var(--email-primary-start))',
                   color: '#fff',
                   padding: '10px 14px',
                   textAlign: 'left',
@@ -74,18 +74,18 @@ export function DataTable({ content, heading, onUpdate }: Props) {
               <tr
                 key={ri}
                 style={{
-                  background: hl ? hl.bg : ri % 2 === 0 ? '#fff' : '#f9fafb',
+                  background: hl ? hl.bg : ri % 2 === 0 ? 'var(--email-bg, #fff)' : 'var(--block-row-bg, var(--email-card-bg, #f9fafb))',
                 }}
               >
                 {row.cells.map((cell, ci) => (
                   <td
                     key={ci}
                     style={{
-                      borderBottom: '1px solid #e5e7eb',
+                      borderBottom: '1px solid var(--block-border, var(--email-card-bg, #e5e7eb))',
                       padding: '10px 14px',
                       fontFamily: 'var(--email-font)',
                       fontSize: 'var(--email-font-size)',
-                      color: hl ? hl.color : '#1a1a2e',
+                      color: hl ? hl.color : 'var(--email-text, #1a1a2e)',
                       fontWeight: hl ? 600 : 400,
                     }}
                   >

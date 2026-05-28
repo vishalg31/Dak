@@ -1,22 +1,31 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface Props {
   partCount: 1 | 2 | 3
   disabled: boolean
+  emailTitle?: string
 }
 
-export function ExportPanel({ partCount, disabled }: Props) {
-  const [projectName, setProjectName] = useState('')
-  const [status, setStatus]           = useState('')
-  const [busy, setBusy]               = useState(false)
+export function ExportPanel({ partCount, disabled, emailTitle }: Props) {
+  const [projectName, setProjectName]   = useState('')
+  const [emailSubject, setEmailSubject] = useState('')
+  const userEditedSubject               = useRef(false)
+  const [status, setStatus]             = useState('')
+  const [busy, setBusy]                 = useState(false)
+  const [emlBusy, setEmlBusy]           = useState(false)
+  const [emlHovered, setEmlHovered]     = useState(false)
 
   // Clipboard (Outlook paste) flow
   const [clipBlobs, setClipBlobs]     = useState<Blob[] | null>(null)
   const [clipStep, setClipStep]       = useState(0)   // 0 = not started, 1-based when active
   const [clipBusy, setClipBusy]       = useState(false)
   const [clipStatus, setClipStatus]   = useState('')
+
+  useEffect(() => {
+    if (!userEditedSubject.current && emailTitle) setEmailSubject(emailTitle)
+  }, [emailTitle])
 
   const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.includes('Firefox')
 
@@ -36,6 +45,25 @@ export function ExportPanel({ partCount, disabled }: Props) {
       setStatus('Export failed. Try again. If this persists, try Chrome or Edge.')
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function handleExportEml() {
+    if (emlBusy || disabled) return
+    if (isFirefox) {
+      setStatus('EML export requires Chrome or Edge. Firefox does not support image capture.')
+      return
+    }
+    setEmlBusy(true)
+    setStatus('')
+    try {
+      const { exportEml } = await import('@/lib/capture')
+      await exportEml(partCount, projectName, emailSubject, setStatus)
+    } catch (err) {
+      console.error(err)
+      setStatus('EML export failed. Try again.')
+    } finally {
+      setEmlBusy(false)
     }
   }
 
@@ -141,6 +169,38 @@ export function ExportPanel({ partCount, disabled }: Props) {
         </div>
       </div>
 
+      <div style={{ marginBottom: 10 }}>
+        <label
+          style={{
+            display: 'block',
+            fontSize: 11,
+            color: 'var(--ui-text-secondary)',
+            marginBottom: 6,
+            fontWeight: 600,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+          }}
+        >
+          Email subject
+        </label>
+        <input
+          type="text"
+          value={emailSubject}
+          onChange={e => { setEmailSubject(e.target.value); userEditedSubject.current = true }}
+          placeholder="Launch: Project Name"
+          style={{
+            width: '100%',
+            padding: '8px 10px',
+            border: '1px solid var(--ui-border)',
+            borderRadius: 6,
+            fontSize: 13,
+            color: 'var(--ui-text-primary)',
+            background: 'var(--ui-surface)',
+            outline: 'none',
+          }}
+        />
+      </div>
+
       {/* Download PNGs */}
       <button
         onClick={handleExport}
@@ -159,6 +219,29 @@ export function ExportPanel({ partCount, disabled }: Props) {
         }}
       >
         {busy ? 'Exporting...' : '↓ Download PNG'}
+      </button>
+
+      {/* Export as EML */}
+      <button
+        onClick={handleExportEml}
+        disabled={disabled || emlBusy}
+        onMouseEnter={() => setEmlHovered(true)}
+        onMouseLeave={() => setEmlHovered(false)}
+        style={{
+          width: '100%',
+          padding: '10px',
+          marginTop: 8,
+          background: disabled || emlBusy ? 'transparent' : emlHovered ? 'var(--ui-primary)' : 'transparent',
+          color: disabled || emlBusy ? 'var(--ui-text-muted)' : emlHovered ? '#ffffff' : 'var(--ui-primary)',
+          border: `1px solid ${disabled || emlBusy ? 'var(--ui-border)' : 'var(--ui-primary)'}`,
+          borderRadius: 6,
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: disabled || emlBusy ? 'not-allowed' : 'pointer',
+          transition: 'background 0.15s, color 0.15s',
+        }}
+      >
+        {emlBusy ? 'Building EML...' : '✉ Export as EML'}
       </button>
 
       {status && (

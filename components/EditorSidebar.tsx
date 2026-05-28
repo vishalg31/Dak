@@ -1,8 +1,21 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { THEMES, applyTheme, updateCSSVar } from '@/lib/themes'
 import { FONT_OPTIONS } from '@/lib/fonts'
+
+const STYLE_KEY = 'dak_style_prefs'
+
+function loadStylePrefs() {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem(STYLE_KEY) : null
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+
+function saveStylePrefs(prefs: object) {
+  try { localStorage.setItem(STYLE_KEY, JSON.stringify(prefs)) } catch {}
+}
 
 interface Props {
   disabled: boolean
@@ -11,44 +24,90 @@ interface Props {
 }
 
 export function EditorSidebar({ disabled, logoBase64, onImageUpload }: Props) {
-  const [activeTheme, setActiveTheme]     = useState('navy')
-  const [primaryColor, setPrimaryColor]   = useState('#0a3d62')
-  const [accentColor, setAccentColor]     = useState('#ff9900')
-  const [activeFont, setActiveFont]       = useState('segoe')
-  const [activeFontSize, setFontSize]     = useState<'S' | 'M' | 'L'>('M')
+  const saved = loadStylePrefs()
+
+  const [activeTheme, setActiveTheme]   = useState(saved?.activeTheme   ?? 'navy')
+  const [primaryColor, setPrimaryColor] = useState(saved?.primaryColor  ?? '#0a3d62')
+  const [accentColor, setAccentColor]   = useState(saved?.accentColor   ?? '#ff9900')
+  const [bgColor, setBgColor]           = useState(saved?.bgColor       ?? '#ffffff')
+  const [textColor, setTextColor]       = useState(saved?.textColor     ?? '#1a1a2e')
+  const [activeFont, setActiveFont]     = useState(saved?.activeFont    ?? 'segoe')
+  const [activeFontSize, setFontSize]   = useState<'S' | 'M' | 'L'>(saved?.activeFontSize ?? 'M')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  function handleThemeClick(themeId: string) {
-    setActiveTheme(themeId)
-    const t = THEMES.find(t => t.id === themeId)
-    if (t) {
-      setPrimaryColor(t.primaryStart)
-      setAccentColor(t.accent)
+  // Re-apply saved CSS vars on mount (CSS vars reset every page load)
+  useEffect(() => {
+    if (saved?.activeTheme) applyTheme(saved.activeTheme)
+    if (saved?.primaryColor) {
+      updateCSSVar('--email-primary-start', saved.primaryColor)
+      updateCSSVar('--email-primary-end',   saved.primaryColor)
     }
+    if (saved?.accentColor)  updateCSSVar('--email-accent',     saved.accentColor)
+    if (saved?.bgColor)      updateCSSVar('--email-bg',         saved.bgColor)
+    if (saved?.textColor)    updateCSSVar('--email-text',       saved.textColor)
+    if (saved?.activeFont) {
+      const opt = FONT_OPTIONS.find(f => f.id === saved.activeFont)
+      if (opt) updateCSSVar('--email-font', opt.family)
+    }
+    if (saved?.activeFontSize) {
+      const map = { S: '13px', M: '15px', L: '17px' } as const
+      updateCSSVar('--email-font-size', map[saved.activeFontSize as 'S' | 'M' | 'L'])
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function prefs(overrides: object) {
+    return { activeTheme, primaryColor, accentColor, bgColor, textColor, activeFont, activeFontSize, ...overrides }
+  }
+
+  function handleThemeClick(themeId: string) {
+    const t = THEMES.find(t => t.id === themeId)
+    const newPrimary = t?.primaryStart ?? primaryColor
+    const newAccent  = t?.accent       ?? accentColor
+    const newBg      = t?.emailBg      ?? bgColor
+    const newText    = t?.textColor    ?? textColor
+    setActiveTheme(themeId)
+    if (t) { setPrimaryColor(newPrimary); setAccentColor(newAccent); setBgColor(newBg); setTextColor(newText) }
     applyTheme(themeId)
+    saveStylePrefs(prefs({ activeTheme: themeId, primaryColor: newPrimary, accentColor: newAccent, bgColor: newBg, textColor: newText }))
   }
 
   function handlePrimaryColor(value: string) {
     setPrimaryColor(value)
     updateCSSVar('--email-primary-start', value)
-    updateCSSVar('--email-primary-end', value)
+    updateCSSVar('--email-primary-end',   value)
+    saveStylePrefs(prefs({ primaryColor: value }))
   }
 
   function handleAccentColor(value: string) {
     setAccentColor(value)
     updateCSSVar('--email-accent', value)
+    saveStylePrefs(prefs({ accentColor: value }))
+  }
+
+  function handleBgColor(value: string) {
+    setBgColor(value)
+    updateCSSVar('--email-bg', value)
+    saveStylePrefs(prefs({ bgColor: value }))
+  }
+
+  function handleTextColor(value: string) {
+    setTextColor(value)
+    updateCSSVar('--email-text', value)
+    saveStylePrefs(prefs({ textColor: value }))
   }
 
   function handleFont(fontId: string) {
     setActiveFont(fontId)
     const opt = FONT_OPTIONS.find(f => f.id === fontId)
     if (opt) updateCSSVar('--email-font', opt.family)
+    saveStylePrefs(prefs({ activeFont: fontId }))
   }
 
   function handleFontSize(size: 'S' | 'M' | 'L') {
     setFontSize(size)
     const map = { S: '13px', M: '15px', L: '17px' }
     updateCSSVar('--email-font-size', map[size])
+    saveStylePrefs(prefs({ activeFontSize: size }))
   }
 
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -151,6 +210,38 @@ export function EditorSidebar({ disabled, logoBase64, onImageUpload }: Props) {
           />
           <span style={{ fontSize: 12, color: 'var(--ui-text-secondary)', fontFamily: 'monospace' }}>
             {accentColor}
+          </span>
+        </div>
+      </div>
+
+      {/* Background colour */}
+      <div style={sectionStyle}>
+        <span style={labelStyle}>Background</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <input
+            type="color"
+            value={bgColor}
+            onChange={e => handleBgColor(e.target.value)}
+            style={{ width: 40, height: 32, border: 'none', cursor: 'pointer', borderRadius: 4 }}
+          />
+          <span style={{ fontSize: 12, color: 'var(--ui-text-secondary)', fontFamily: 'monospace' }}>
+            {bgColor}
+          </span>
+        </div>
+      </div>
+
+      {/* Text colour */}
+      <div style={sectionStyle}>
+        <span style={labelStyle}>Text colour</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <input
+            type="color"
+            value={textColor}
+            onChange={e => handleTextColor(e.target.value)}
+            style={{ width: 40, height: 32, border: 'none', cursor: 'pointer', borderRadius: 4 }}
+          />
+          <span style={{ fontSize: 12, color: 'var(--ui-text-secondary)', fontFamily: 'monospace' }}>
+            {textColor}
           </span>
         </div>
       </div>

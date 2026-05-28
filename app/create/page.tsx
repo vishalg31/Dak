@@ -8,10 +8,11 @@ import { EmailPreview } from '@/components/EmailPreview'
 import { SkeletonLoader } from '@/components/SkeletonLoader'
 import { EditorSidebar } from '@/components/EditorSidebar'
 import { ExportPanel } from '@/components/ExportPanel'
-import { getCachedGeneration, setCachedGeneration } from '@/lib/cache'
+import { getCachedGeneration, setCachedGeneration, updateCachedGenerationByHash, genHash } from '@/lib/cache'
 import { checkUsage, incrementUsage, type UsageStatus } from '@/lib/checkUsage'
 import { db } from '@/lib/db'
-import type { EmailData, BlockContent } from '@/types/email'
+import type { EmailData, BlockContent, BlockType, BlockStyle } from '@/types/email'
+import { defaultBlock } from '@/lib/blocks'
 import { OnboardingModal } from '@/components/OnboardingModal'
 import { runTourIfNeeded } from '@/lib/tour'
 import Link from 'next/link'
@@ -28,9 +29,15 @@ export default function CreatePage() {
   const [usageStatus, setUsageStatus]   = useState<UsageStatus | null>(null)
   const [progressState, setProgressState] = useState<'idle' | 'loading' | 'complete'>('idle')
   const [progressKey, setProgressKey]   = useState(0)
-  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(() =>
+    typeof window !== 'undefined' && !localStorage.getItem('dak_restore')
+  )
   const [previewScale, setPreviewScale] = useState(1)
-  const previewWrapRef = useRef<HTMLDivElement>(null)
+  const [activeHash, setActiveHash]   = useState<string | null>(null)
+  const [hasEdits, setHasEdits]       = useState(false)
+  const originalEmailDataRef          = useRef<EmailData | null>(null)
+  const previewWrapRef                = useRef<HTMLDivElement>(null)
+  const autosaveRef                   = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Daily session ID — same UUID for the whole day, new one each day
   const [sessionId] = useState(() => {
@@ -45,13 +52,8 @@ export default function CreatePage() {
     return newId
   })
 
-  // Load usage status on mount + show modal on every fresh visit (skip if restoring a session)
   useEffect(() => {
     checkUsage(sessionId).then(setUsageStatus)
-    if (typeof window !== 'undefined') {
-      const hasRestore = localStorage.getItem('dak_restore')
-      if (!hasRestore) setShowOnboarding(true)
-    }
   }, [sessionId])
 
   // Restore session from homepage history click
@@ -67,6 +69,9 @@ export default function CreatePage() {
         setParts((record.parts as 1 | 2 | 3) ?? 2)
         setContent(record.content ?? '')
         setEmailData(record.data as EmailData)
+        originalEmailDataRef.current = record.data as EmailData
+        setHasEdits(false)
+        setActiveHash(hash)
       })
     } catch {}
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -77,6 +82,19 @@ export default function CreatePage() {
     const t = setTimeout(() => setCacheNotice(null), 3000)
     return () => clearTimeout(t)
   }, [cacheNotice])
+
+  // Auto-save edits back to Dexie so restored sessions show the edited version
+  useEffect(() => {
+    if (!emailData || isLoading || !activeHash) return
+    if (originalEmailDataRef.current && emailData !== originalEmailDataRef.current) {
+      setHasEdits(true)
+    }
+    if (autosaveRef.current) clearTimeout(autosaveRef.current)
+    autosaveRef.current = setTimeout(() => {
+      updateCachedGenerationByHash(activeHash, emailData)
+    }, 1500)
+    return () => { if (autosaveRef.current) clearTimeout(autosaveRef.current) }
+  }, [emailData]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fire product tour once after first email generation this session
   const tourFiredRef = useRef(false)
@@ -145,6 +163,9 @@ export default function CreatePage() {
         // ignore storage failures
       }
       setEmailData(data)
+      originalEmailDataRef.current = data as EmailData
+      setHasEdits(false)
+      setActiveHash(genHash(_content, _template, _parts))
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Generation failed. Please try again.'
       setError(message)
@@ -172,6 +193,13 @@ export default function CreatePage() {
     setShowOnboarding(false)
   }
 
+  function revertToOriginal() {
+    if (!originalEmailDataRef.current) return
+    setEmailData(originalEmailDataRef.current)
+    setHasEdits(false)
+    if (activeHash) updateCachedGenerationByHash(activeHash, originalEmailDataRef.current)
+  }
+
   function updateBlock(idx: number, blockContent: BlockContent) {
     setEmailData(prev => {
       if (!prev) return prev
@@ -180,16 +208,53 @@ export default function CreatePage() {
     })
   }
 
+  function updateBlockHeading(idx: number, heading: string | null) {
+    setEmailData(prev => {
+      if (!prev) return prev
+      const blocks = prev.blocks.map((b, i) => i === idx ? { ...b, heading } : b)
+      return { ...prev, blocks }
+    })
+  }
+
   function updateTopLevel(field: string, value: string) {
     setEmailData(prev => prev ? { ...prev, [field]: value } : prev)
   }
 
-  function updateCTA(field: 'label' | 'url', value: string) {
+  function updateCTA(field: 'label' | 'url' | 'hidden', value: string | boolean) {
     setEmailData(prev => prev ? { ...prev, cta: { ...prev.cta, [field]: value } } : prev)
   }
 
   function updateSignoff(field: 'closing' | 'name', value: string) {
     setEmailData(prev => prev ? { ...prev, signoff: { ...prev.signoff, [field]: value } } : prev)
+  }
+
+  function removeBlock(idx: number) {
+    setEmailData(prev => {
+      if (!prev) return prev
+      const blocks = prev.blocks.filter((_, i) => i !== idx)
+      return { ...prev, blocks }
+    })
+  }
+
+  function updateBlockStyle(idx: number, style: BlockStyle) {
+    setEmailData(prev => {
+      if (!prev) return prev
+      const blocks = prev.blocks.map((b, i) => i === idx ? { ...b, style } : b)
+      return { ...prev, blocks }
+    })
+  }
+
+  function addBlock(atIndex: number, type: BlockType, part: number) {
+    setEmailData(prev => {
+      if (!prev) return prev
+      const newBlock = defaultBlock(type, part)
+      const blocks = [
+        ...prev.blocks.slice(0, atIndex),
+        newBlock,
+        ...prev.blocks.slice(atIndex),
+      ]
+      return { ...prev, blocks }
+    })
   }
 
   return (
@@ -385,10 +450,16 @@ export default function CreatePage() {
                 parts={parts}
                 logoBase64={logoBase64}
                 onUpdateBlock={updateBlock}
+                onUpdateBlockHeading={updateBlockHeading}
                 onUpdateTopLevel={updateTopLevel}
                 onUpdateCTA={updateCTA}
                 onUpdateSignoff={updateSignoff}
                 onRegenerate={generate}
+                hasEdits={hasEdits}
+                onRevert={revertToOriginal}
+                onRemoveBlock={removeBlock}
+                onAddBlock={addBlock}
+                onUpdateBlockStyle={updateBlockStyle}
               />
             ) : (
               <div
@@ -454,7 +525,7 @@ export default function CreatePage() {
           />
 
           <div data-tour="export-panel" style={{ marginTop: 24 }}>
-            <ExportPanel partCount={parts} disabled={!emailData || isLoading} />
+            <ExportPanel partCount={parts} disabled={!emailData || isLoading} emailTitle={emailData?.title} />
           </div>
         </div>
       </div>

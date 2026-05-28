@@ -5,7 +5,8 @@ export interface Theme {
   primaryEnd: string
   accent: string
   cardBg: string
-  emailBg: string   // email canvas background (paper colour)
+  emailBg: string
+  textColor: string
 }
 
 export const THEMES: Theme[] = [
@@ -17,6 +18,7 @@ export const THEMES: Theme[] = [
     accent: '#ff9900',
     cardBg: '#f0f4f8',
     emailBg: '#ffffff',
+    textColor: '#1a1a2e',
   },
   {
     id: 'charcoal',
@@ -26,6 +28,7 @@ export const THEMES: Theme[] = [
     accent: '#ff9900',
     cardBg: '#f0f4f8',
     emailBg: '#ffffff',
+    textColor: '#1a1a2e',
   },
   {
     id: 'indigo',
@@ -35,6 +38,7 @@ export const THEMES: Theme[] = [
     accent: '#0d9488',
     cardBg: '#f8f7ff',
     emailBg: '#ffffff',
+    textColor: '#1a1a2e',
   },
   {
     id: 'editorial',
@@ -44,6 +48,7 @@ export const THEMES: Theme[] = [
     accent: '#E1A4C2',
     cardBg: '#ECE6D2',
     emailBg: '#F2EEDF',
+    textColor: '#1a1a2e',
   },
   {
     id: 'apex',
@@ -53,6 +58,7 @@ export const THEMES: Theme[] = [
     accent: '#F5A623',
     cardBg: '#EDE9DC',
     emailBg: '#F7F5EF',
+    textColor: '#1a1a2e',
   },
 ]
 
@@ -60,10 +66,11 @@ export function applyTheme(themeId: string): void {
   const theme = THEMES.find(t => t.id === themeId)
   if (!theme) return
   updateCSSVar('--email-primary-start', theme.primaryStart)
-  updateCSSVar('--email-primary-end', theme.primaryEnd)
-  updateCSSVar('--email-accent', theme.accent)
-  updateCSSVar('--email-card-bg', theme.cardBg)
-  updateCSSVar('--email-bg', theme.emailBg)
+  updateCSSVar('--email-primary-end',   theme.primaryEnd)
+  updateCSSVar('--email-accent',        theme.accent)
+  updateCSSVar('--email-card-bg',       theme.cardBg)
+  updateCSSVar('--email-bg',            theme.emailBg)
+  updateCSSVar('--email-text',          theme.textColor)
 }
 
 export function updateCSSVar(key: string, value: string): void {

@@ -32,6 +32,7 @@ async function captureElement(el: HTMLElement, bgColor: string): Promise<string>
       minWidth: '800px',
       maxWidth: '800px',
     },
+    filter: (node: HTMLElement) => !node.hasAttribute?.('data-export-hide'),
   })
 }
 
@@ -101,6 +102,92 @@ export async function capturePartsAsBlobs(
     blobs.push(await canvasToBlob(normalised))
   }
   return blobs
+}
+
+export async function exportEml(
+  partCount: number,
+  projectName: string,
+  emailSubject: string,
+  setStatus: (s: string) => void
+): Promise<void> {
+  setStatus('Capturing...')
+
+  const previewRoot = document.getElementById('email-preview-root')!
+  const bgColor = getComputedStyle(previewRoot).getPropertyValue('--email-bg').trim() || '#ffffff'
+
+  const rawCanvases: HTMLCanvasElement[] = []
+  for (let i = 1; i <= partCount; i++) {
+    const el = document.getElementById(`part-${i}`)
+    if (!el) continue
+    await embedImages(el)
+    const dataUrl = await captureElement(el, bgColor)
+    rawCanvases.push(await dataUrlToCanvas(dataUrl))
+    await new Promise(r => setTimeout(r, 300))
+  }
+
+  const maxWidth  = Math.max(...rawCanvases.map(c => c.width))
+  const maxHeight = Math.max(...rawCanvases.map(c => c.height))
+  const normCanvases = rawCanvases.map(c => normalizeCanvas(c, maxWidth, maxHeight, bgColor))
+
+  setStatus('Building EML...')
+
+  const imgBase64s = normCanvases.map(c => c.toDataURL('image/png').split(',')[1])
+
+  const boundary = `boundary_dak_${Date.now()}`
+  const name     = (projectName || 'email').toLowerCase().replace(/\s+/g, '')
+  const subject  = emailSubject || projectName || 'Email'
+
+  const htmlBody = [
+    '<html><body style="margin:0;padding:0;background:#ffffff;">',
+    '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;">',
+    '<tr><td align="left">',
+    '<table width="800" cellpadding="0" cellspacing="0" border="0">',
+    ...imgBase64s.map((_, i) =>
+      `<tr><td><img src="cid:part${i + 1}img" width="800" style="display:block;width:800px;max-width:800px;" /></td></tr>`
+    ),
+    '</table></td></tr></table>',
+    '</body></html>',
+  ].join('')
+
+  const emlParts: string[] = [
+    `From: `,
+    `To: `,
+    `Subject: ${subject}`,
+    `MIME-Version: 1.0`,
+    `Content-Type: multipart/related; boundary="${boundary}"`,
+    ``,
+    `--${boundary}`,
+    `Content-Type: text/html; charset=UTF-8`,
+    `Content-Transfer-Encoding: 7bit`,
+    ``,
+    htmlBody,
+    ``,
+  ]
+
+  imgBase64s.forEach((b64, i) => {
+    emlParts.push(
+      `--${boundary}`,
+      `Content-Type: image/png`,
+      `Content-Transfer-Encoding: base64`,
+      `Content-ID: <part${i + 1}img>`,
+      `Content-Disposition: inline; filename="part${i + 1}.png"`,
+      ``,
+      b64.match(/.{1,76}/g)!.join('\n'),
+      ``,
+    )
+  })
+
+  emlParts.push(`--${boundary}--`)
+
+  const blob = new Blob([emlParts.join('\r\n')], { type: 'message/rfc822' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href     = url
+  a.download = `${name}_dak.eml`
+  a.click()
+  URL.revokeObjectURL(url)
+
+  setStatus('✉ EML ready — double-click to open in Outlook')
 }
 
 export async function exportEmail(

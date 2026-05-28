@@ -35,7 +35,7 @@ export function setCachedFile(file: File, text: string): void {
 
 const MAX_GEN_ENTRIES = 5
 
-function genHash(text: string, template: string, parts: number): string {
+export function genHash(text: string, template: string, parts: number): string {
   return hashString(text + template + String(parts))
 }
 
@@ -50,6 +50,17 @@ export async function getCachedGeneration(
   } catch {
     return null
   }
+}
+
+export async function updateCachedGenerationByHash(hash: string, data: unknown): Promise<void> {
+  try {
+    const d = data as { title?: string; emoji?: string }
+    await db.generations.update(hash, {
+      data,
+      title: d.title ?? 'Untitled',
+      emoji: d.emoji ?? '✉',
+    })
+  } catch {}
 }
 
 export async function setCachedGeneration(

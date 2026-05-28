@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import type { CalloutContent } from '@/types/email'
 
@@ -13,14 +13,14 @@ export function CalloutBlock({ content, heading, onUpdate }: Props) {
     <div
       className="email-block"
       style={{
-        borderLeft: '4px solid var(--email-accent)',
-        background: '#fffbf0',
+        borderLeft: '4px solid var(--block-border, var(--email-accent))',
+        background: 'var(--block-bg, var(--email-card-bg, #fffbf0))',
         padding: '14px 16px',
         borderRadius: '0 8px 8px 0',
         margin: '16px 0 24px',
         fontFamily: 'var(--email-font)',
         fontSize: 'var(--email-font-size)',
-        color: '#1a1a2e',
+        color: 'var(--email-text, #1a1a2e)',
         lineHeight: 1.6,
       }}
     >

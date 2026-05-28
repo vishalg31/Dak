@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import type { EmailData } from '@/types/email'
 
@@ -18,7 +18,7 @@ export function SignOff({ closing, name, onUpdate }: Props) {
         borderTop: '1px solid #e5e7eb',
         fontFamily: 'var(--email-font)',
         fontSize: 'var(--email-font-size)',
-        color: '#1a1a2e',
+        color: 'var(--email-text, #1a1a2e)',
       }}
     >
       <div
